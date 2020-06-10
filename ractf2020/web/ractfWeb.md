@@ -80,9 +80,9 @@ flag: `ractf{Y0u_R_ab0uT_2_h4Ck_t1Me__4re_u_sur3?}`
 [image2]: ./images/image2.png
 [image3]: ./images/image3.png
 
-
-### Quarantine - Hidden information
 ---
+### Quarantine - Hidden information
+
 Description:
 
 `We think there's a file they don't want people to see hidden somewhere! See if you can find it, it's gotta be on their webapp somewhere...`
@@ -95,8 +95,9 @@ A simple get request to this directory reveals the flag
 
 `flag: ractf{1m_n0t_4_r0b0T}`
 
-### Quarantine
 ---
+### Quarantine
+
 Description:
 
 `See if you can get access to an account on the webapp.`
@@ -117,4 +118,7 @@ Looks like our payload worked, but it triggered an error when it saw more that 1
 
 [image4]: ./images/image4.png
 [image5]: ./images/image5.png
+
+---
+
 
