@@ -1,7 +1,6 @@
 ## ractf All Web Challenges by sAINT_barber
 ---
 
-*These web challenges *
 
 ### C0llide
 
@@ -83,7 +82,7 @@ flag: `ractf{Y0u_R_ab0uT_2_h4Ck_t1Me__4re_u_sur3?}`
 
 
 ##Quarantine - Hidden information
-
+---
 Description:
 
 `We think there's a file they don't want people to see hidden somewhere! See if you can find it, it's gotta be on their webapp somewhere...`
@@ -97,7 +96,7 @@ A simple get request to this directory reveals the flag
 `flag: ractf{1m_n0t_4_r0b0T}`
 
 ##Quarantine
-
+---
 Description:
 
 `See if you can get access to an account on the webapp.`
