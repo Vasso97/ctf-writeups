@@ -1,8 +1,9 @@
 ## ractf All Web Challenges by sAINT_barber
 ---
 
+*These web challenges *
 
-## C0llide
+### C0llide
 
 Description:
 
@@ -79,3 +80,42 @@ flag: `ractf{Y0u_R_ab0uT_2_h4Ck_t1Me__4re_u_sur3?}`
 [image1]: ./images/image1.png
 [image2]: ./images/image2.png
 [image3]: ./images/image3.png
+
+
+##Quarantine - Hidden information
+
+Description:
+
+`We think there's a file they don't want people to see hidden somewhere! See if you can find it, it's gotta be on their webapp somewhere...`
+
+From the description we check `/robots.txt` on the website and we notice one dissalowed entry:
+
+`/admin-stash`
+
+A simple get request to this directory reveals the flag
+
+`flag: ractf{1m_n0t_4_r0b0T}`
+
+##Quarantine
+
+Description:
+
+`See if you can get access to an account on the webapp.`
+
+After reviewing the website a bit we notice and admin section that we can not access, a login page and i register page. The register page has not been implemented yet.
+
+I tried a basic sql injection `' or 1=1;-- -` on the login page but we get this error:
+
+![alt text][image4]
+
+`Attempting to login as more than one user?`
+
+Looks like our payload worked, but it triggered an error when it saw more that 1 row being return by the database, we can use `LIMIT` to limit the amount of rows that are returned, lets try:
+`' or 1=1 limit 1;-- -`
+
+![alt text][image5]
+
+
+[image4]: ./images/image4.png
+[image5]: ./images/image5.png
+
