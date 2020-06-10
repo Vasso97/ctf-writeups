@@ -115,6 +115,10 @@ Looks like our payload worked, but it triggered an error when it saw more that 1
 
 ![alt text][image5]
 
+And we receive the flag.
+
+`flag: ractf{Y0u_B3tt3r_N0t_h4v3_us3d_sqlm4p}`
+
 
 [image4]: ./images/image4.png
 [image5]: ./images/image5.png
