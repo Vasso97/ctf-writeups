@@ -81,7 +81,7 @@ flag: `ractf{Y0u_R_ab0uT_2_h4Ck_t1Me__4re_u_sur3?}`
 [image3]: ./images/image3.png
 
 
-##Quarantine - Hidden information
+### Quarantine - Hidden information
 ---
 Description:
 
@@ -95,7 +95,7 @@ A simple get request to this directory reveals the flag
 
 `flag: ractf{1m_n0t_4_r0b0T}`
 
-##Quarantine
+### Quarantine
 ---
 Description:
 
