@@ -12,7 +12,7 @@ After opening the file i saw i was obfuscated:
 
 <img src="images/image5.png" width="700">
 
-So i put the first variable in the console to see what it was 
+So i put the first variable in the console to see what it was
 
 <img src="images/image6.png" width="700">
 
