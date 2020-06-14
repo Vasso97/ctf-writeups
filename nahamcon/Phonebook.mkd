@@ -4,7 +4,7 @@ Description:
 
 <img src="images/image8.png" width="450">
 
-Okay, so from the description we understand absoloutly nothing. Lets have a look at the website.
+Okay, so from the description we understand absolutely nothing. Let's have a look at the website.
 
 <img src="images/image9.png" width="450">
 
