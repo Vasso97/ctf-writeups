@@ -33,7 +33,7 @@ After decoding the base64 string we find the following php code:
 
 I first tried to fetch the flag with the LFI vulnerability but that didnt work. So i read a little about the `extract()` function on `https://www.php.net/manual/en/function.extract.php`
 
-It is extreamly dangerous to use the extract function on user input because it basically grabs, in our case, the $_POST array and converts each value to a variable. Meaning we can provide the word `emergency` in our POST request and have the extract function set it. 
+It is extremely dangerous to use the extract function on user input because it basically grabs, in our case, the $_POST array and converts each value to a variable. Meaning we can provide the word `emergency` in our POST request and have the extract function set it. 
 
 I intercepted the request in burp:
 
