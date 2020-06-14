@@ -2,7 +2,7 @@
 
 Description:
 
-`Are you here on official business? Prove it.` 
+`Are you here on official business? Prove it.`
 
 The description gives us no information whatsoever.
 

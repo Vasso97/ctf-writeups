@@ -8,7 +8,7 @@ Okay, so from the description we understand absoloutly nothing. Lets have a look
 
 <img src="images/image9.png" width="450">
 
-Okay here the website wants use to provide a the get parameter `file` to get to the phphonebook page. 
+Okay here the website wants us to provide a get parameter `file` to get to the phphonebook page. 
 
 <img src="images/image10.png" width="450">
 
