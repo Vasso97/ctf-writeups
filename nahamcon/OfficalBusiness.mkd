@@ -1,0 +1,131 @@
+## Official Business by sAINT_barber
+
+Description:
+
+`Are you here on official business? Prove it.` 
+
+The description gives us no information whatsoever.
+
+<img src="images/image15.png" width="450">
+
+A basic login page. The challenge wants us to login as admin. Whenever I logged anything it would responed with a forbidden 403 page.
+
+So i decided to have a look at robots.txt and found the source code for the website:
+
+```
+#!/usr/bin/env python3
+
+from flask import (
+    Flask,
+    render_template,
+    request,
+    abort,
+    redirect,
+    make_response,
+    g,
+    jsonify,
+)
+import binascii
+import hashlib
+import json
+
+app = Flask(__name__)
+app.secret_key = open("secret_key", "r").read().strip()
+FLAG = open("flag.txt", "r").read().strip()
+
+
+def do_login(user, password, admin):
+
+    cookie = {"user": user, "password": password, "admin": admin}
+    cookie["digest"] = hashlib.sha512(
+        app.secret_key + bytes(json.dumps(cookie, sort_keys=True), "ascii")
+    ).hexdigest()
+
+    response = make_response(redirect("/"))
+    response.set_cookie("auth", binascii.hexlify(json.dumps(cookie).encode("utf8")))
+
+    return response
+
+
+@app.route("/login", methods=["POST"])
+def login():
+
+    user = request.form.get("user", "")
+    password = request.form.get("password", "")
+
+    if (
+        user != "hacker"
+        or hashlib.sha512(bytes(password, "ascii")).digest()
+        != b"hackshackshackshackshackshackshackshackshackshackshackshackshack"
+    ):
+        return abort(403)
+    return do_login(user, password, True)
+
+
+def load_cookie():
+
+    cookie = {}
+    auth = request.cookies.get("auth")
+    if auth:
+
+        try:
+            cookie = json.loads(binascii.unhexlify(auth).decode("utf8"))
+            digest = cookie.pop("digest")
+
+            if (
+                digest
+                != hashlib.sha512(
+                    app.secret_key + bytes(json.dumps(cookie, sort_keys=True), "ascii")
+                ).hexdigest()
+            ):
+                return False, {}
+        except:
+            pass
+
+    return True, cookie
+
+
+@app.route("/logout", methods=["GET"])
+def logout():
+
+    response = make_response(redirect("/"))
+    response.set_cookie("auth", "", expires=0)
+    return response
+
+
+@app.route("/")
+def index():
+
+    ok, cookie = load_cookie()
+    if not ok:
+        return abort(403)
+
+    return render_template(
+        "index.html",
+        user=cookie.get("user", None),
+        admin=cookie.get("admin", None),
+        flag=FLAG,
+    )
+
+
+@app.route("/robots.txt")
+def source():
+    return "
+
+" + open(__file__).read() + "
+
+"
+
+
+if __name__ == "__main__":
+    app.run(debug=True, host="0.0.0.0", port=1337)
+```
+
+I read the source code for quite some time and took much longer to solve than i should've, we need `load_cookie()` to return True, so all we need to do is not provide digest in our cookie and the `try` will fail, returning True.And then we can just provide admin=true in our cookie and convert it to hex: 
+
+{"admin":true,"user":""} => 7b2261646d696e223a747275652c2275736572223a22227d
+
+<img src="images/image16.png" width="450">
+
+flag: ` flag{did_this_even_pass_code_review} `
+
