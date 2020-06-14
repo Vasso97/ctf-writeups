@@ -24,3 +24,8 @@ Without chaging the user agent:
 
 <img src="images/image2.png" width="1000">
 
+After with `User-Agent: Mozilla/4.0 (compatible; MSIE 5.5; Windows 95; BCD2000)`
+
+<img src="images/image3.png" width="1000">
+
+flag: `flag{user_agents_undercover}`
