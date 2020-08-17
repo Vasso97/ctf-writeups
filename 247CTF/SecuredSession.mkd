@@ -2,7 +2,7 @@
 
 By going to the challenge web page we get the source code of the challenge:
 
-`
+```
 import os
 from flask import Flask, request, session
 from flag import flag
@@ -36,7 +36,7 @@ def source():
 
 if __name__ == "__main__":
     app.run()
-`
+```
 
 After reviewing the above code we can make a GET request to `/flag` and provide a get parameter `secret_key`. But the mistake here is that the flag is stored in our cookie. Meaning we dont need to guess the secret_key correctly. All we need to do is provide a random `secret_key` and view the flag in our `session` cookie.
 
