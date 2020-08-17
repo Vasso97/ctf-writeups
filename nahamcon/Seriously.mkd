@@ -12,6 +12,8 @@ After viewing the site and intercepting some requests i noticed the response hea
 
 Once decoded: `{"items":{"0":{"name":"Dracaena trifasciata","price":14.99,"count":1}}}`
 
+If we edit our cookie to something that cannot be deserialized, eg.: `{"items":{"0":{"name":"Dracaena trifasciata","p` the Go to Cart section will not render properly. From that alone we know that our cookie is being deserialized
+
 I googled a bit about node js deserialization and found this website explaining the exploit perfectly: `https://opsecx.com/index.php/2017/02/08/exploiting-node-js-deserialization-bug-for-remote-code-execution/`
 
 Like many deserialization exploits on various languages (PHP, Python) we need to craft some code to be executed when provoked after going through the unserialize() function.
@@ -35,6 +37,8 @@ var serialize = require('node-serialize');
 console.log("Serialized: \n" + serialize.serialize(y));
 ```
 
-Running this will Immediately invoked our function executing whoami:
+Running this will Immediately invoke our function executing `whoami`:
 
 <img src="images/image19.png" width="650">
+
+
