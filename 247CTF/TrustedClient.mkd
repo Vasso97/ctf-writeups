@@ -11,7 +11,6 @@ After viewing the source code we notice some javascript on the bottom. From expi
 
 By using a site like: `https://lelinhtinh.github.io/de4js/` we can deofuscate the code.
 
-
 <img src="images/image4.png" width="600">
 
 And we get the flag

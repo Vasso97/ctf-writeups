@@ -1,7 +1,62 @@
 ### Compare the Pair (Easy)
 ---
 
+By viewing the web page webpage we see the source code of the site:
 
+```
+<?php
+  require_once('flag.php');
+  $password_hash = "0e902564435691274142490923013038";
+  $salt = "f789bbc328a3d1a3";
+  if(isset($_GET['password']) && md5($salt . $_GET['password']) == $password_hash){
+    echo $flag;
+  }
+  echo highlight_file(__FILE__, true);
+?>
+```
+
+By reviewing the code we notice that the `$password_hash` variable is being compared to a GET parameter `password`. The provided `password` has a `$salt` concatenated to the beginning of the string and is being md5 hashed.
+
+We also notice that the comparison is with only 2 equals `==` meaning we can type juggle our input. 
+
+e.g.
+Because the `$password_hash` begins with `0e` and ends with all numbers we can compare it with another number like so:
+
+<img src="images/image5.png" width="400">
+
+As you can see php interprets the `$password_hash` as a number and therfore prints true because it is so close to the integer `0`
+
+If the developers used a triple equals sign this would not be the case:
+
+<img src="images/image6.png" width="400">
+
+Because now type comes into play, and both variables do not have the same type ($password_hash = String, 0 = Integer)
+
+With all that said we need to somehow find a string that onced its' hashed produces a hash with `0e` in front. Plus the `$slat` has to be concatenated in front.
+
+First i wrote a simple php script to brute force this with all the passwords from rockyou.txt. But i was out of luck, so i just counted up from 0-1000000000000 in a for loop.
+
+```
+<?php
+$password_hash = "0e902564435691274142490923013038";
+$salt = "f789bbc328a3d1a3";
+
+for($i=0; $i<1000000000000; $i++){
+  if(md5($salt . $i) == $password_hash){
+    echo "Found it: ";
+    echo $i . "\n";
+    break;
+  }
+}
+
+```
+As we can see below we got a hit and the hash starts with `0e` and a bunch of numbers at the end:
+
+<img src="images/image7.png" width="400">
+
+We can now provide the password `237701818` and get the flag:
+
+<img src="images/image8.png" width="400">
 
 ---
 #### sAINT_barber
