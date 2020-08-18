@@ -1,0 +1,20 @@
+### Trusted Client (Easy)
+---
+
+By going to the website all we see is a simple login page. If we provide a username and password we get an alert box telling us its invalid. My guess is the login functionality is being processed client side. (plus the title hints client side)
+
+<img src="images/image2.png" width="600">
+
+After viewing the source code we notice some javascript on the bottom. From expiriance im guessing it is JSFuck obfuscated javascript.
+
+<img src="images/image3.png" width="600">
+
+By using a site like: `https://lelinhtinh.github.io/de4js/` we can deofuscate the code.
+
+
+<img src="images/image4.png" width="600">
+
+And we get the flag
+
+---
+#### sAINT_barber

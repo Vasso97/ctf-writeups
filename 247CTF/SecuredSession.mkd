@@ -49,4 +49,5 @@ All we need to do now is base64 decode the first part of the cookie and then bas
 
 <img src="images/image1.png" width="900">
 
-sAINT_barber
+---
+#### sAINT_barber
