@@ -1,0 +1,34 @@
+### Forgotten File Pointer (Moderate)
+---
+By viewing the web page webpage we see the source code of the site:
+
+```
+<?php
+  $fp = fopen("/tmp/flag.txt", "r");
+  if($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['include']) && strlen($_GET['include']) <= 10) {
+    include($_GET['include']);
+  }
+  fclose($fp);
+  echo highlight_file(__FILE__, true);
+?>
+```
+
+As the challenge description noted the webpaged reads the flag from `/tmp/flag.txt` but never echos it to the site. We can also provide an `include` GET parameter which will be included in the site, but the parameter must be less then 10 chars. Meaning we cant just include `/tmp/flag.txt` as that would be 13 chars long and too easy.
+
+After some googling i found that file pointers get stored at `/dev/fd/<num>` so all we need to do is bruteforce that directory until we find the correct file descriptor.
+
+To brute force i used `konan` with a simple wordlist of numbers from 0-100:
+
+`konan -u https://936092c194280200.247ctf.com/?include=/dev/fd/%% -w num.txt -C "<>1974"`
+
+The -C is to exlucde the page length of 1974.
+
+<img src="images/image9.png" width="600">
+
+By including the File Pointer `/dev/fd/10` we get the flag:
+
+<img src="images/image10.png" width="400">
+
+
+---
+#### sAINT_barber
