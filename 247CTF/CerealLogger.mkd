@@ -60,7 +60,7 @@ echo "\n";
 
 Now i can provide `$injection` and it will echo the urlencoded base64 encoded serialized object. Plus have "0e" concatenated at the end to bypass the first check.
 
-<img src="images/image17.png" width="400">
+<img src="images/image17.png" width="600">
 
 I looked a bit online and found a nice injection from PayloadAllTheThings, i have modified it a bit so it is just a PoC and not a webshell (plus i assume the webroot is at `/var/www/html/`):
 
