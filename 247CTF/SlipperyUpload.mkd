@@ -1,4 +1,4 @@
-### Compare the Pair (Easy)
+### Slippery Upload (Moderate)
 ---
 
 By viewing the web page webpage we see the source code of the site:
