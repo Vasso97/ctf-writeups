@@ -70,7 +70,7 @@ CREATE TABLE saint.barber (data text);
 INSERT INTO saint.barber (data) VALUES ('<?php echo <pre>; system('whoami'); ?>');--
 ```
 
-This will create a SQLite database file and insert `system('whoami')` into a table named `saint` and column named `barber`. Because the database file will be named `saint.php` any php code in the file will be rendered in the browser leading us to remote code execution.
+This will create a SQLite database file and insert `system('whoami')` into a table named `barber` and column named `data`. Because the database file will be named `saint.php` any php code in the file will be rendered in the browser leading us to remote code execution.
 
 So our `$injection` will look something like this: 
 
