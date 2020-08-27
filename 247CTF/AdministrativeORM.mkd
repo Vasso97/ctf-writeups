@@ -1,0 +1,155 @@
+### Administrative ORM (Moderate)
+---
+
+This challenge was quite ugly and took me about 2 days to fully understand uuids. I dont really like this writeup but it is what it is.
+
+By viewing the website we get the source code:
+
+```
+import pymysql.cursors
+import pymysql, os, bcrypt, debug
+from flask import Flask, request
+from secret import flag, secret_key, sql_user, sql_password, sql_database, sql_host
+
+class ORM():
+    def __init__(self):
+        self.connection = pymysql.connect(host=sql_host, user=sql_user, password=sql_password, db=sql_database, cursorclass=pymysql.cursors.DictCursor)
+
+    def update(self, sql, parameters):
+        with self.connection.cursor() as cursor:
+          cursor.execute(sql, parameters)
+          self.connection.commit()
+
+    def query(self, sql, parameters):
+        with self.connection.cursor() as cursor:
+          cursor.execute(sql, parameters)
+          result = cursor.fetchone()
+        return result
+
+    def get_by_name(self, user):
+        return self.query('select * from users where username=%s', user)
+
+    def get_by_reset_code(self, reset_code):
+        return self.query('select * from users where reset_code=%s', reset_code)
+
+    def set_password(self, user, password):
+        password_hash = bcrypt.hashpw(password, bcrypt.gensalt())
+        self.update('update users set password=%s where username=%s', (password_hash, user))
+
+    def set_reset_code(self, user):
+        self.update('update users set reset_code=uuid() where username=%s', user)
+
+app = Flask(__name__)
+app.config['DEBUG'] = False
+app.config['SECRET_KEY'] = secret_key
+app.config['USER'] = 'admin'
+
+@app.route("/get_flag")
+def get_flag():
+    user_row = app.config['ORM'].get_by_name(app.config['USER'])
+    if bcrypt.checkpw(request.args.get('password','').encode('utf8'), user_row['password'].encode('utf8')):
+        return flag
+    return "Invalid password for %s!" % app.config['USER']
+
+@app.route("/update_password")
+def update_password():
+    user_row = app.config['ORM'].get_by_reset_code(request.args.get('reset_code',''))
+    if user_row:
+        app.config['ORM'].set_password(app.config['USER'], request.args.get('password','').encode('utf8'))
+        return "Password reset for %s!" % app.config['USER']
+    app.config['ORM'].set_reset_code(app.config['USER'])
+    return "Invalid reset code for %s!" % app.config['USER']
+
+@app.route("/statistics") # TODO: remove statistics
+def statistics():
+    return debug.statistics()
+
+@app.route('/')
+def source():
+    return "
+
+%s
+
+" % open(__file__).read()
+
+@app.before_first_request
+def before_first():
+    app.config['ORM'] = ORM()
+    app.config['ORM'].set_password(app.config['USER'], os.urandom(32).hex())
+
+@app.errorhandler(Exception)
+def error(error):
+    return "Something went wrong!"
+
+if __name__ == "__main__":
+    app.run()
+```
+
+After analysing the code we notice at `@app.before_first_request` the application instansiates an `ORM` object and sets a random password for the user `admin`. We can make a get request to the route `/get_flag` and provide a get parameter `password`. If the password is correct we get the flag.
+
+By reviewing the route `update_password` we notice that we can send a get parameter `reset_code`. If the reset code is correct we can change some users' password by providing a second get parameter `password`. The only user in the database is `admin`.
+
+After looking around in the `ORM` class we notice that the `reset_code` is just a mysql uuid code. These codes are not random and are created with certain system criterias: Timestamp, Clock Sequence and Ethernet Card MAC address. By going to `/statictics` we have all requierd information to craft our own uuid code.
+
+This is the `statistics` page before making any changes to the database:
+
+<img src="images/image21.png" width="400">
+
+
+The bug in this code is that even after providing a wrong `reset_code` to `/update_password` the application will still call `set_reset_code`. The second bug in the code is that the `/statistics` page is available publicly. This helps us because the `/statistics` page gets updated with the latest system staticstics, leading us to craft our own uuid code. This is the `/statistics` page after performing a simple get request to `/update_password`.
+
+<img src="images/image22.png" width="400">
+
+####UUIDs
+
+I dont want to go into too much detail on how uuids are crafted, there are lots of resources online, but i will underline the core concepts.
+
+UUIDs have the following format: aaaaaaaa-bbbb-Nccc-Mddd-eeeeeeeeeeee
+
+If we concatenate ccc + bbbb + aaaaaaaa we get the hex value of the timestamp starting from `October 15th 1582` in seconds. Must be UTC
+
+N is the version of the uuid function which will be 1.
+
+Mddd is the clock sequence and adding `1` and then as many `0` as the most significant bits until we reach 16 bits. Also `M` must be an `8`, `9`, `A` or `B`.
+
+And the last part is the Hardware MAC address.
+
+By looking at the statistics page we can see we have everything we need to create the admins reset code.
+
+```
+HWaddr: 02:42:AC:11:00:05
+Clock Seq: 4806
+last_reset: 2020-08-27 11:22:24.386692400
+```
+
+First i will add the HWaddr to the uuid code as its the easiest part, plus we know `N=1`, so our reset code so far looks like this: `aaaaaaaa-bbbb-1ccc-Mddd-0242ac110005`
+
+We can fetch the EPOCH timestamp of `2020-08-27 11:22:24` which is equal to: `1598527344` (UTC) (Note) This timestamp is in seconds. Plus this timestamp is from `1/1/1970` Not `October 15th 1582` like i mentioned before. Meaning we need to add the remaining seconds from `1/1/1970` to `15/10/1582`. The difference between these two dates is `12219292800` (seconds).After the simple addition we get: `13817820144` (seconds).
+
+We notice the `last_reset` is in nano seconds. All we need to do to convert our current timestamp to nano seconds is `x10^9` and add the decimal values-> `138178201443866924`. Now we have the timestamp in nano seconds from `15/10/1582`.
+
+Lets Convert this to hex: `138178201443866924` -> `1EAE85794C3992C`
+
+Now we have:
+```
+ccc -> 1EA
+bbbb -> E857
+aaaaaaaa -> 94C3992C
+```
+
+This is our reset code so far: `94c3992c-e857-11ea-Mddd-0242ac110005`
+
+All that is remaining is the clock sequence. `Mddd` is a 16 bit number that starts with `10`. First we must convert `4806` to binary which is `1001011000110`. This is only 13 bits long. Lets add `100` to the MSB, `1001001011000110`. Now lets convert this to hex: `92C6`
+
+And finally we have our uuid: `94c3992c-e857-11ea-92c6-0242ac110005`
+
+Lets send this off with a new password like this: `https://6ff30d4e8523c0e0.247ctf.com/update_password?reset_code=94c3992c-e857-11ea-92c6-0242ac110005&password=saintbarber`
+
+<img src="images/image23.png" width="600">
+
+All we need to do now is a get reqeust to `/get_flag` with the password we set for the admin.
+
+<img src="images/image24.png" width="600">
+
+---
+#### sAINT_barber
