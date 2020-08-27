@@ -100,7 +100,7 @@ The bug in this code is that even after providing a wrong `reset_code` to `/upda
 
 <img src="images/image22.png" width="400">
 
-####UUIDs
+#### UUIDs
 
 I dont want to go into too much detail on how uuids are crafted, there are lots of resources online, but i will underline the core concepts.
 
